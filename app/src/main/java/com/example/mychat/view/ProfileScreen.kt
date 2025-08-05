@@ -39,7 +39,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -47,10 +46,11 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.mychat.ui.theme.ctaBlue
 import com.example.mychat.ui.theme.greyBackground
 import com.example.mychat.ui.theme.lineColor
+import com.example.mychat.viewmodel.LoginViewModel
 
 
 @Composable
-fun ProfileScreen(controller: NavHostController) {
+fun ProfileScreen(viewModel: LoginViewModel, controller: NavHostController) {
     var name by remember { mutableStateOf("") }
     var selectedImg by remember { mutableStateOf("") }
     val context = LocalContext.current
@@ -136,7 +136,7 @@ fun ProfileScreen(controller: NavHostController) {
         )
         Button(
             onClick = {
-                controller.navigate("chat")
+                viewModel.uploadImage(name, selectedImg,controller)
             },
             Modifier.padding(top = 30.dp), enabled = (name.isNotEmpty()),
             colors = ButtonDefaults.buttonColors(

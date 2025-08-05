@@ -42,16 +42,14 @@ import com.example.mychat.viewmodel.LoginViewModel
 
 
 @Composable
-fun PasswordScreen(viewmodel: LoginViewModel, controller: NavHostController) {
+fun LoginScreen(viewmodel: LoginViewModel, controller: NavHostController) {
     var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
-    var showPassword2 by remember { mutableStateOf(false) }
     var enabled by remember { mutableStateOf(false) }
-    LaunchedEffect(password, confirmPassword) {
+    LaunchedEffect(password, ) {
         enabled = password.length>=8 && password.any{it.isUpperCase()} &&
                 password.any{it.isLowerCase()} && password.any{it.isDigit() }
-                && password == confirmPassword && password.isNotEmpty()
+                && password.isNotEmpty()
     }
     Column(
         Modifier.fillMaxSize()
@@ -68,17 +66,17 @@ fun PasswordScreen(viewmodel: LoginViewModel, controller: NavHostController) {
             Text("💬", Modifier, fontSize = 50.sp, textAlign = TextAlign.Center)
         }
         Text(
-            "Create Password", Modifier.padding(top = 30.dp, bottom = 10.dp),
+            "Welcome Back!", Modifier.padding(top = 30.dp, bottom = 10.dp),
             color = Color.Black,
             fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
         )
 
         Text(
-            "Set a strong password for your account", Modifier.padding(bottom = 32.dp),
+            "Enter you password to login ${viewmodel.email.value}", Modifier.padding(bottom = 32.dp),
             color = Color.Gray, textAlign = TextAlign.Center,
         )
         OutlinedTextField(value = password, onValueChange = {input->
-             password = input
+            password = input
 
         }, Modifier, placeholder = {
             Text("Enter Password",Modifier, color = Color.Gray)
@@ -105,46 +103,19 @@ fun PasswordScreen(viewmodel: LoginViewModel, controller: NavHostController) {
                 imeAction = ImeAction.Next)
 
         )
-        OutlinedTextField(value = confirmPassword, onValueChange = {input->
-             confirmPassword = input
 
-        }, Modifier.padding(top = 30.dp), placeholder = {
-            Text("Re-Enter Password",Modifier, color = Color.Gray)
-        },
-            colors = TextFieldDefaults.colors(focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent, cursorColor = ctaBlue,
-                focusedContainerColor = greyBackground,
-                unfocusedContainerColor = greyBackground
-            ),
-            visualTransformation = if(showPassword2) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                IconButton(
-                    onClick = { showPassword2 = !showPassword2}
-                ) {
-                    if(showPassword2){
-                        Text("👁️")
-                    }
-                    else{
-                        Text("👁️‍🗨️")
-                    }
-                }
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done)
-
-        )
         Button(
             onClick = {
-                viewmodel.registerUser(password,controller)
+               viewmodel.login(password, controller)
             },
             Modifier.padding(top = 30.dp), enabled = enabled,
             colors = ButtonDefaults.buttonColors(
                 containerColor = if(
-                     enabled) ctaBlue else greyBackground
+                    enabled) ctaBlue else greyBackground
             ),
             shape = RoundedCornerShape(10.dp)
         ) {
-            Text("continue", Modifier.padding(horizontal = 50.dp), fontWeight = FontWeight.SemiBold,
+            Text("Submit", Modifier.padding(horizontal = 50.dp), fontWeight = FontWeight.SemiBold,
                 color = if(enabled) Color.White else Color.Black)
         }
         Spacer(Modifier.height(24.dp))

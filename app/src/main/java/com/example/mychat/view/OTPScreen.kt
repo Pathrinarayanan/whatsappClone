@@ -29,16 +29,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.mychat.ui.theme.ctaBlue
 import com.example.mychat.ui.theme.greyBackground
+import com.example.mychat.viewmodel.LoginViewModel
 
 
 @Composable
-fun OTPScreen(controller: NavHostController) {
+fun OTPScreen(viewmodel: LoginViewModel, controller: NavHostController) {
     var otpInput by remember { mutableStateOf("") }
     Column(
         Modifier.fillMaxSize()
@@ -61,7 +61,7 @@ fun OTPScreen(controller: NavHostController) {
         )
 
         Text(
-            "We've sent a 6-digit code to the email", Modifier.padding(bottom = 32.dp),
+            "We've sent a 6-digit code to the ${viewmodel.email.value}", Modifier.padding(bottom = 32.dp),
             color = Color.Gray, textAlign = TextAlign.Center,
         )
         OutlinedTextField(value = otpInput, onValueChange = {input->
@@ -83,7 +83,7 @@ fun OTPScreen(controller: NavHostController) {
         Button(
             onClick = {
                 if(otpInput.length == 6){
-                    controller.navigate("password")
+                    viewmodel.verifyOtp(otpInput,controller)
                 }
             },
             Modifier.padding(top = 30.dp), enabled = (otpInput.length ==6),

@@ -27,21 +27,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.mychat.ui.theme.ctaBlue
 import com.example.mychat.ui.theme.greyBackground
+import com.example.mychat.viewmodel.LoginViewModel
 
 
 @Composable
-fun EmailScreen(controller: NavHostController) {
-    var email by remember { mutableStateOf("") }
+fun EmailScreen(viewModel: LoginViewModel, controller: NavHostController) {
     var buttonEnabled by remember { mutableStateOf(false) }
 
-    LaunchedEffect(email) {
-        buttonEnabled = Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    LaunchedEffect(viewModel.email.value) {
+        buttonEnabled = Patterns.EMAIL_ADDRESS.matcher(viewModel.email.value).matches()
     }
     Column(
         Modifier.fillMaxSize()
@@ -66,9 +65,9 @@ fun EmailScreen(controller: NavHostController) {
             color = Color.Gray, textAlign = TextAlign.Center,
         )
         OutlinedTextField(
-            value = email,
+            value = viewModel.email.value,
             onValueChange = {
-                email = it
+                viewModel.email.value = it
             },
             Modifier.fillMaxWidth().padding(horizontal = 20.dp).
             background(greyBackground, shape = RoundedCornerShape(10.dp)), placeholder = {
@@ -78,7 +77,7 @@ fun EmailScreen(controller: NavHostController) {
         )
         Button(
             onClick = {
-                controller.navigate("otp")
+                viewModel.sendOtp(controller)
             },
             Modifier.fillMaxWidth().padding(top = 30.dp).height(50.dp)
                 .padding(horizontal = 20.dp),
