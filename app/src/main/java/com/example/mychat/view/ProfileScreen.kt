@@ -130,7 +130,7 @@ fun ProfileScreen(viewModel: LoginViewModel, controller: NavHostController) {
                 focusedContainerColor = greyBackground,
                 unfocusedContainerColor = greyBackground
             ),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Done)
 
         )
