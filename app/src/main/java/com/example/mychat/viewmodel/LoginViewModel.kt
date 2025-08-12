@@ -2,9 +2,12 @@ package com.example.mychat.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
 import android.widget.Toast
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
@@ -13,9 +16,12 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.mychat.ApiService
 import com.example.mychat.RetrofitService
+import com.example.mychat.modal.ChatMessage
 import com.example.mychat.modal.OtpRequest
+import com.example.mychat.modal.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -24,10 +30,13 @@ class LoginViewModel(application: Application): AndroidViewModel(application) {
 
     val api = RetrofitService.getInstance().create<ApiService>(ApiService::class.java)
     val email = mutableStateOf("")
+    var FriendUser : User? =null
     private val _isLoading = MutableStateFlow(false)
     val isLoading  : StateFlow<Boolean> = _isLoading
     val firebaseAuth : FirebaseAuth = FirebaseAuth.getInstance()
     val firebaseFireStore : FirebaseFirestore = FirebaseFirestore.getInstance()
+    var usersData  = mutableStateListOf<User>()
+    val myId = firebaseAuth.currentUser?.uid
 
     fun sendOtp(controller: NavHostController) {
         _isLoading.value = true
@@ -148,6 +157,52 @@ class LoginViewModel(application: Application): AndroidViewModel(application) {
                 onResult(false)
             }
     }
+    fun loadOtherUsers(){
+        val context = getApplication<Application>().applicationContext
+        val currentUid = firebaseAuth.currentUser?.uid?: return
+        firebaseFireStore.collection("users").whereNotEqualTo("uid", currentUid)
+            .get()
+            .addOnSuccessListener {result->
+                usersData.clear()
+                usersData.addAll( result.documents.mapNotNull {it->
+                    it.toObject(User::class.java)
+                })
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Failed to load users ${it.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+    fun base64ToBitmap(base64 : String ): Bitmap?{
+        return try{
+            val decodedBytes = Base64.decode(base64, Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+        }catch (e: Exception ){
+            null
+        }
+    }
+
+    fun  sendMessage(senderId : String , receiverId : String, message : String){
+        val chatMessage = ChatMessage(senderId, receiverId, message)
+        val chatId = if (senderId < receiverId ) "${senderId}_$receiverId" else "${receiverId}_$senderId"
+        firebaseFireStore.collection("chats")
+            .document(chatId)
+            .collection("messages")
+            .add(chatMessage)
+    }
+    fun listenMessages(
+        senderId : String , receiverId : String,
+        onMessageChanged: (List<ChatMessage>) ->Unit
+    ){
+        val chatId = if (senderId < receiverId ) "${senderId}_$receiverId" else "${receiverId}_$senderId"
+        firebaseFireStore.collection("chats").document(chatId)
+            .collection("messages")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapShot, _->
+                val messages = snapShot?.toObjects(ChatMessage::class.java) ?: emptyList()
+                onMessageChanged(messages)
+            }
+    }
+
 
 
     fun uriToBase64(context : Context, uri : Uri): String {
@@ -182,4 +237,5 @@ class LoginViewModel(application: Application): AndroidViewModel(application) {
                     .show()
                     }
     }
+
 }

@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.mychat.view.ChatScreen
 import com.example.mychat.view.EmailScreen
 import com.example.mychat.view.LoginScreen
+import com.example.mychat.view.MessageScreen
 import com.example.mychat.view.OTPScreen
 import com.example.mychat.view.PasswordScreen
 import com.example.mychat.view.ProfileScreen
@@ -34,7 +35,7 @@ class MainActivity : ComponentActivity() {
             val isLoading by viewModel.isLoading.collectAsState()
             val controller = rememberNavController()
             Box(Modifier.fillMaxSize()) {
-                NavHost(controller, startDestination = "email") {
+                NavHost(controller, startDestination = if(viewModel.firebaseAuth.currentUser?.uid !=null)"chat" else "email") {
                     composable("email") {
                         EmailScreen(viewModel, controller)
                     }
@@ -48,10 +49,13 @@ class MainActivity : ComponentActivity() {
                         ProfileScreen(viewModel,controller)
                     }
                     composable("chat") {
-                        ChatScreen()
+                        ChatScreen(viewModel, controller)
                     }
                     composable("login") {
                         LoginScreen(viewModel,controller)
+                    }
+                    composable("message") {
+                        MessageScreen(viewModel)
                     }
                 }
             }

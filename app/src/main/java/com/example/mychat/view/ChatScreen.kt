@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -24,15 +26,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
 import com.example.mychat.R
 import com.example.mychat.modal.BottomItem
+import com.example.mychat.modal.User
 import com.example.mychat.ui.theme.ctaBlue
 import com.example.mychat.ui.theme.greyBackground
 import com.example.mychat.ui.theme.lineColor
 import com.example.mychat.ui.theme.textGrey
+import com.example.mychat.viewmodel.LoginViewModel
 
 
 @Composable
@@ -69,12 +74,15 @@ fun BottomItemUI(item: BottomItem, selected: Boolean, onClick:()->Unit) {
 
 
 @Composable
-fun ProfileItem(){
+fun ProfileItem(viewmodel: LoginViewModel, data: User, onClick: () -> Unit) {
     Row(
-        Modifier,
+        Modifier.clickable{
+            onClick()
+        },
         verticalAlignment = Alignment.CenterVertically
     ){
-        Image(painter = painterResource(R.drawable.person_img),
+        Image(
+            rememberAsyncImagePainter(viewmodel.base64ToBitmap(data.profileImage)),
             contentDescription = null,
             Modifier.size(52.dp).weight(0.1f))
         Column(
@@ -83,7 +91,7 @@ fun ProfileItem(){
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row {
-                Text("Andrew Parker", Modifier, fontWeight = FontWeight.SemiBold)
+                Text(data?.name ?:"", Modifier, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.weight(1f))
                 Text("28/07/2025", Modifier, color = textGrey)
             }
@@ -105,7 +113,10 @@ fun ProfileItem(){
 }
 
 @Composable
-fun ChatScreen(){
+fun ChatScreen(viewModel: LoginViewModel, controller: NavHostController) {
+    LaunchedEffect(Unit) {
+        viewModel.loadOtherUsers()
+    }
     Scaffold(
         Modifier.padding(top = 30.dp),
         topBar = {
@@ -146,8 +157,11 @@ fun ChatScreen(){
                 .padding(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(10){
-                ProfileItem()
+            itemsIndexed(viewModel.usersData){ index, data->
+                ProfileItem(viewModel, data){
+                    viewModel.FriendUser = data
+                    controller.navigate("message")
+                }
             }
         }
     }
