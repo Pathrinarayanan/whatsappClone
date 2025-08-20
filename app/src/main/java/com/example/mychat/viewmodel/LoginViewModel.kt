@@ -7,8 +7,10 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
 import android.widget.Toast
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,15 +24,19 @@ import com.example.mychat.modal.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.ServerTimestamp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class LoginViewModel(application: Application): AndroidViewModel(application) {
 
     val api = RetrofitService.getInstance().create<ApiService>(ApiService::class.java)
     val email = mutableStateOf("")
-    var FriendUser : User? =null
+    var FriendUser by mutableStateOf<User?>(null)
     private val _isLoading = MutableStateFlow(false)
     val isLoading  : StateFlow<Boolean> = _isLoading
     val firebaseAuth : FirebaseAuth = FirebaseAuth.getInstance()
@@ -169,6 +175,12 @@ class LoginViewModel(application: Application): AndroidViewModel(application) {
 
                 }
                     ?: emptyList())
+
+                usersData.find {
+                    it.uid == FriendUser?.uid
+                }.let {user->
+                    FriendUser = user
+                }
             }
 
     }
@@ -236,6 +248,27 @@ class LoginViewModel(application: Application): AndroidViewModel(application) {
                 Toast.makeText(context, it.message, Toast.LENGTH_LONG)
                     .show()
                     }
+    }
+    fun lastSeenMessage(timeStamp : Long) : String{
+        val diff = System.currentTimeMillis() - timeStamp
+        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        when {
+            timeStamp == 0L ->  return "online"
+            diff < 60 * 1000  -> return "last seen few seconds ago"
+            diff < 60 * 60 * 1000  -> {
+                val min = diff/ (60 * 60 * 1000)
+                return "last seen $min ago"
+            }
+            diff < 24 * 60 *60  * 1000 ->{
+                return "last seen today at ${sdf.format(Date(timeStamp))}"
+            }
+            diff < 2 * 24 * 60 *60  * 1000 ->{
+                return "last seen yesterday at ${sdf.format(Date(timeStamp))}"
+            }
+
+        }
+        val sdfDate = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault())
+        return "last seen on ${sdfDate.format(Date(timeStamp))}"
     }
 
 }

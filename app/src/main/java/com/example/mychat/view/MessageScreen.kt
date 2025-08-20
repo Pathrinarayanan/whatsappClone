@@ -74,7 +74,7 @@ fun TopBar(viewModel: LoginViewModel) {
                 Modifier.fillMaxWidth().padding(start = 8.dp)
             ) {
                 Text(viewModel.FriendUser?.name ?:"")
-                Text("Tap here for contact info")
+                Text(viewModel.lastSeenMessage(viewModel.FriendUser?.lastSeen ?:0L))
             }
             Row(Modifier.weight(0.2f)) {
                 Image(painter = painterResource(R.drawable.video_icon),

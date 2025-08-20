@@ -71,7 +71,9 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         val uuid = viewModel.firebaseAuth.currentUser?.uid ?: return
         val update = hashMapOf<String, Any>(
-            "isOnline" to true
+            "isOnline" to true,
+            "lastSeen" to 0L
+
         )
         viewModel.firebaseFireStore.collection("users").document(uuid)
             .update(update)
