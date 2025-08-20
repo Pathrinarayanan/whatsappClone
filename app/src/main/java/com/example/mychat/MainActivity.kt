@@ -66,5 +66,26 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onStart() {
+        super.onStart()
+        val uuid = viewModel.firebaseAuth.currentUser?.uid ?: return
+        val update = hashMapOf<String, Any>(
+            "isOnline" to true
+        )
+        viewModel.firebaseFireStore.collection("users").document(uuid)
+            .update(update)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        val uuid = viewModel.firebaseAuth.currentUser?.uid ?: return
+        val update = hashMapOf<String, Any>(
+            "isOnline" to false,
+            "lastSeen" to System.currentTimeMillis()
+        )
+        viewModel.firebaseFireStore.collection("users").document(uuid)
+            .update(update)
+    }
 }
 

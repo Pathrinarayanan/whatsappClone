@@ -5,5 +5,7 @@ data class User(
     val email : String = "",
     val name  : String  = "",
     val profileImage : String  = "",
-    val createdAt : Long =0L
+    val createdAt : Long =0L,
+    val isOnline : Boolean = false,
+    val lastSeen : Long = 0L
 )

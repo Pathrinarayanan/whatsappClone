@@ -161,16 +161,16 @@ class LoginViewModel(application: Application): AndroidViewModel(application) {
         val context = getApplication<Application>().applicationContext
         val currentUid = firebaseAuth.currentUser?.uid?: return
         firebaseFireStore.collection("users").whereNotEqualTo("uid", currentUid)
-            .get()
-            .addOnSuccessListener {result->
+            .addSnapshotListener { result , _ ->
                 usersData.clear()
-                usersData.addAll( result.documents.mapNotNull {it->
-                    it.toObject(User::class.java)
-                })
+                usersData.addAll( result?.documents?.mapNotNull {it->
+                   val user =  it.toObject(User::class.java)
+                    user?.copy(isOnline =   it.getBoolean("isOnline") ?: false)
+
+                }
+                    ?: emptyList())
             }
-            .addOnFailureListener {
-                Toast.makeText(context, "Failed to load users ${it.message}", Toast.LENGTH_LONG).show()
-            }
+
     }
     fun base64ToBitmap(base64 : String ): Bitmap?{
         return try{
