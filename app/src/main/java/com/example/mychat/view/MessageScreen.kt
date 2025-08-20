@@ -42,12 +42,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import coil.request.Disposable
 import com.example.mychat.R
+import com.example.mychat.modal.ChatItem
 import com.example.mychat.modal.ChatMessage
 import com.example.mychat.modal.MessageStatus
 import com.example.mychat.ui.theme.ctaBlue
@@ -114,11 +116,11 @@ fun BottomBarChat(viewModel: LoginViewModel){
                     text = it;
                 },
                 Modifier.fillMaxWidth().verticalScroll(scrollState)
-                    .padding(4.dp),
+                    .padding(8.dp),
                 maxLines = 3,
             )
             if (text.isEmpty()) {
-                Text("Message", Modifier.padding(5.dp), Color.Gray)
+                Text("Message", Modifier.padding(8.dp), Color.Gray)
             }
 
             }
@@ -184,13 +186,34 @@ fun MessageScreen(viewModel: LoginViewModel) {
                     .padding(vertical = 8.dp)
                 , reverseLayout = true,
             ){
-                itemsIndexed(messages){ index, data->
-                    if(data.senderId == viewModel.myId){
-                        SenderItem(data.messsage, viewModel.messageTimeStamp(data.timestamp), data.status) //my message
+                val groupMessages = viewModel.groupMessage(messages)
+                itemsIndexed(groupMessages){ index, data->
+                    when(data){
+                        is ChatItem.Header->{
+                            Box(
+                                Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ){
+                                Text(data.date, Modifier.background(ctaBlue,RoundedCornerShape(12.dp))
+                                    .padding(8.dp),
+                                        color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    )
+
+                            }
+                        }
+                        is ChatItem.Message->{
+                            val msg = data.message
+                            if(msg.senderId == viewModel.myId){
+                                SenderItem(msg.messsage, viewModel.messageTimeStamp(msg.timestamp), msg.status) //my message
+                            }
+                            else{
+                                ReceiverItem(msg.messsage)
+                            }
+                        }
                     }
-                    else{
-                        ReceiverItem(data.messsage)
-                    }
+
+
                 }
             }
         }

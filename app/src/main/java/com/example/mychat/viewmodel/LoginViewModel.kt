@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.mychat.ApiService
 import com.example.mychat.RetrofitService
+import com.example.mychat.modal.ChatItem
 import com.example.mychat.modal.ChatMessage
 import com.example.mychat.modal.MessageStatus
 import com.example.mychat.modal.OtpRequest
@@ -196,6 +197,22 @@ class LoginViewModel(application: Application): AndroidViewModel(application) {
         }catch (e: Exception ){
             null
         }
+    }
+    fun groupMessage(message: List<ChatMessage>) : List<ChatItem>{
+       val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+       val dayFormat = SimpleDateFormat("dd MM yyyy", Locale.getDefault())
+        return message
+            .groupBy { dateFormat.format(Date(it.timestamp)) }
+            .flatMap { (date, msg)->
+                val header = when(date){
+                    dateFormat.format(System.currentTimeMillis()) ->"Today"
+                    dateFormat.format(System.currentTimeMillis() - 24*60*60*1000) ->"Yesterday"
+                    else-> dayFormat.format(Date(msg.first().timestamp))
+                }
+                msg.map {
+                    ChatItem.Message(it)
+                }+ listOf(ChatItem.Header(header))
+            }
     }
 
     fun  sendMessage(senderId : String , receiverId : String, message : String){
