@@ -19,15 +19,19 @@ import androidx.navigation.NavHostController
 import com.example.mychat.ApiService
 import com.example.mychat.RetrofitService
 import com.example.mychat.modal.ChatMessage
+import com.example.mychat.modal.MessageStatus
 import com.example.mychat.modal.OtpRequest
 import com.example.mychat.modal.User
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ServerTimestamp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.sql.Time
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -43,6 +47,7 @@ class LoginViewModel(application: Application): AndroidViewModel(application) {
     val firebaseFireStore : FirebaseFirestore = FirebaseFirestore.getInstance()
     var usersData  = mutableStateListOf<User>()
     val myId = firebaseAuth.currentUser?.uid
+    var messageListener : ListenerRegistration ?=null
 
     fun sendOtp(controller: NavHostController) {
         _isLoading.value = true
@@ -201,16 +206,33 @@ class LoginViewModel(application: Application): AndroidViewModel(application) {
             .collection("messages")
             .add(chatMessage)
     }
+    fun startListeningMesssage(senderId: String, receiverId : String,onMessageChanged: (List<ChatMessage>) ->Unit){
+        messageListener = listenMessages(senderId, receiverId, onMessageChanged)
+    }
+    fun stopListeningMessage(){
+        messageListener?.remove()
+        messageListener = null
+    }
+
     fun listenMessages(
         senderId : String , receiverId : String,
         onMessageChanged: (List<ChatMessage>) ->Unit
-    ){
+    ) : ListenerRegistration{
         val chatId = if (senderId < receiverId ) "${senderId}_$receiverId" else "${receiverId}_$senderId"
-        firebaseFireStore.collection("chats").document(chatId)
+        return firebaseFireStore.collection("chats").document(chatId)
             .collection("messages")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapShot, _->
                 val messages = snapShot?.toObjects(ChatMessage::class.java) ?: emptyList()
+                //receiver recived and render on his screen,
+                snapShot?.documents?.forEach {doc->
+                   val user = doc.toObject(ChatMessage::class.java)
+                    if(user?.receiverId == myId){
+                        doc.reference.update("status", MessageStatus.READ)
+                    }
+
+                }
+
                 onMessageChanged(messages)
             }
     }
@@ -270,5 +292,8 @@ class LoginViewModel(application: Application): AndroidViewModel(application) {
         val sdfDate = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault())
         return "last seen on ${sdfDate.format(Date(timeStamp))}"
     }
-
+    fun messageTimeStamp(time: Long): String{
+        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        return sdf.format(Date(time))
+    }
 }

@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -42,11 +43,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import coil.request.Disposable
 import com.example.mychat.R
 import com.example.mychat.modal.ChatMessage
+import com.example.mychat.modal.MessageStatus
+import com.example.mychat.ui.theme.ctaBlue
 import com.example.mychat.viewmodel.LoginViewModel
 
 
@@ -148,11 +152,15 @@ fun BottomBarChat(viewModel: LoginViewModel){
 @Composable
 fun MessageScreen(viewModel: LoginViewModel) {
     val messages = remember { mutableStateListOf<ChatMessage>() }
-    LaunchedEffect(Unit) {
-        viewModel.listenMessages(viewModel.myId?:"", viewModel.FriendUser?.uid ?:""){newMessages->
+    DisposableEffect(Unit) {
+        viewModel.startListeningMesssage(viewModel.myId?:"", viewModel.FriendUser?.uid ?:""){newMessages->
             messages.clear()
             messages.addAll(newMessages)
         }
+        onDispose {
+            viewModel.stopListeningMessage()
+        }
+
     }
     Scaffold(
         Modifier,
@@ -178,7 +186,7 @@ fun MessageScreen(viewModel: LoginViewModel) {
             ){
                 itemsIndexed(messages){ index, data->
                     if(data.senderId == viewModel.myId){
-                        SenderItem(data.messsage) //my message
+                        SenderItem(data.messsage, viewModel.messageTimeStamp(data.timestamp), data.status) //my message
                     }
                     else{
                         ReceiverItem(data.messsage)
@@ -190,7 +198,7 @@ fun MessageScreen(viewModel: LoginViewModel) {
 }
 
 @Composable
-fun SenderItem(messsage: String) {
+fun SenderItem(messsage: String, messageTimeStamp: String, currentStatus: MessageStatus) {
     Row (
         Modifier.fillMaxWidth().padding(top = 5.dp),
         horizontalArrangement = Arrangement.End
@@ -200,16 +208,29 @@ fun SenderItem(messsage: String) {
             modifier = Modifier.weight(0.7f),
             contentAlignment = Alignment.CenterEnd
         ){
-            Row {
-                Text(
-                    messsage,
-                    Modifier.wrapContentWidth()
-                        .background(
-                            Color(0xffDCF7C5), RoundedCornerShape(16.dp)
+            Row(Modifier, verticalAlignment = Alignment.Bottom) {
+                Box(Modifier.background(
+                    Color(0xffDCF7C5), RoundedCornerShape(16.dp)
+                ).padding(8.dp)) {
+                    Column {
+
+                        Text(
+                            messsage,
+                            Modifier.wrapContentWidth(),
+                            textAlign = TextAlign.Start
                         )
-                        .padding(8.dp),
-                    textAlign = TextAlign.Start
-                )
+                        Row(Modifier.padding(top = 2.dp), horizontalArrangement = Arrangement.End ) {
+                            Text(messageTimeStamp, Modifier, fontSize = 10.sp, color =Color.Gray)
+                            Spacer(Modifier.width(4.dp))
+                            if(currentStatus == MessageStatus.READ){
+                                Text("✔✔", Modifier, fontSize = 12.sp, color = ctaBlue)
+                            }
+                            else{
+                                Text("✔", Modifier, fontSize = 12.sp, color =Color.Gray)
+                            }
+                        }
+                    }
+                }
 
             }
         }
